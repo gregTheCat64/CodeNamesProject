@@ -1,0 +1,33 @@
+.button {
+-fx-font-size: 32px;
+-fx-font-weight: bold;
+-fx-pref-width: 350px;
+-fx-pref-height: 150px;
+-fx-text-fill: #808080;
+
+
+}
+
+
+.funcButton{
+-fx-font-size: 12px;
+-fx-pref-width: 100px;
+-fx-pref-height: 25px;
+-fx-font-weight: bold;
+
+-fx-font-color: "Black";
+-fx-text-fill: "Black";
+}
+
+.button:hover{
+-fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 0 , 1 );
+}
+
+.button:pressed{
+-fx-border-color: #F0FFFF;
+}
+
+.textArea {
+-fx-text-fill: "Black";
+-fx-font-size: 8px;
+}
