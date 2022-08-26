@@ -8,27 +8,27 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 
 
-fun sendTable(token: String) {
+fun firebaseInit() {
     val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(FileInputStream("src/fcm.json")))
         .build()
 
-    val message = java.lang.StringBuilder()
-    val table: Array<Card?> = cards
-    for (card in table) {
-        message.append("${card?.color} ")
-
-    }
-    message.append("/")
-    for (card in table) {
-        message.append(card?.text)
-    }
     val sams_token =
         "cTovH_MKRDSVVUQqaSezWK:APA91bED9RMgqPUz35gxnoMWV1rhPw_9fVb0BV9uQEsPqkGaXnmMx5bmU_UamLlm7g1UM2m-g5sQIFx5ew4PuuyXANTy4H7aVAVj2A3J8KQmyji4ON8ifBfFTmqisynWE44irl9m8pWi"
 
-
     FirebaseApp.initializeApp(options)
+}
+ fun sendTable(token: String){
+     val message = java.lang.StringBuilder()
+     val table: Array<Card?> = cards
+     for (card in table) {
+         message.append("${card?.color} ")
 
+     }
+     message.append("/")
+     for (card in table) {
+         message.append(card?.text)
+     }
         val newPostMessage = Message.builder()
             .putData("action", "NEW_GAME")
             .putData(

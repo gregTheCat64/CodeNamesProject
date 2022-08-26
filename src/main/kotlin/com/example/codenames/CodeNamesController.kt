@@ -7,11 +7,10 @@ import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.util.Duration
-import java.util.*
 import java.util.prefs.Preferences
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import java.io.File;
+import javafx.scene.media.Media
+import javafx.scene.media.MediaPlayer
+import java.io.File
 
 
 
@@ -142,7 +141,7 @@ class CodeNamesController {
         token = prefs.get("TOKEN", "")
         newGameBtn.style = "-fx-font-size: 12px; -fx-pref-width: 100px;-fx-pref-height: 25px;-fx-font-weight: bold;"
         addNewDeviceBtn.style = "-fx-font-size: 12px; -fx-pref-width: 100px;-fx-pref-height: 25px;-fx-font-weight: bold;"
-
+        firebaseInit()
 
         nameLabel.text = "Имя устройства: $nameOfDevice"
         buttons = listOf<Button>(
@@ -194,7 +193,7 @@ class CodeNamesController {
         }
     }
 
-    private fun playGame(buttons: kotlin.collections.List<Button>) {
+    private fun playGame(buttons: List<Button>) {
         isRedTurn = !isRedTurn
        if (isRedTurn) {
            cards = getCards(true)
@@ -207,7 +206,7 @@ class CodeNamesController {
            blueResult = 9
            blackResult = 0
        }
-        //sendTable(token.toString())
+        sendTable(token)
         result()
 
 
@@ -227,8 +226,7 @@ class CodeNamesController {
         }
     }
 
-
-    fun openCard(button: Button, tag: Int) {
+    private fun openCard(button: Button, tag: Int) {
         MediaPlayer(soundClick).play()
         when (cards[tag]?.color) {
             Color.RED -> {
