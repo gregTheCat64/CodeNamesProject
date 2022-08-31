@@ -2,16 +2,17 @@ package com.example.codenames
 
 
 import javafx.animation.TranslateTransition
+import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.control.Button
+import javafx.scene.control.ChoiceBox
+import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
-import javafx.util.Duration
-import java.util.prefs.Preferences
 import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
-import java.io.File
-
+import javafx.util.Duration
+import java.io.*
 
 
 lateinit var cards: Array<Card?>
@@ -117,12 +118,18 @@ class CodeNamesController {
     @FXML
     lateinit var infoField: Label
 
+    @FXML
+    lateinit var deviceMenu: ComboBox<String>
+
     var redResult = 9
     var blueResult = 8
     var blackResult = 0
     var isRedTurn = true
-    lateinit var token: String
+
     lateinit var buttons: List<Button>
+
+    private var currentNameOfDevice:String = ""
+    lateinit var currentToken: String
 
     val soundClickFile:String = "src/main/resources/sounds/click.mp3"
     val soundErrorFile:String = "src/main/resources/sounds/error.mp3"
@@ -133,17 +140,48 @@ class CodeNamesController {
     val soundWin = Media(File(soundWinFile).toURI().toString())
     val soundMinions = Media(File(soundMinionsFile).toURI().toString())
 
+    var filename = "tokens.dat"
+    lateinit var devices:ArrayList<Device>
+
 
     @FXML
     fun initialize(){
-        val prefs = Preferences.userRoot().node(this.javaClass.name)
-        val nameOfDevice = prefs.get("NAME","не назначено")
-        token = prefs.get("TOKEN", "")
+
         newGameBtn.style = "-fx-font-size: 12px; -fx-pref-width: 100px;-fx-pref-height: 25px;-fx-font-weight: bold;"
         addNewDeviceBtn.style = "-fx-font-size: 12px; -fx-pref-width: 100px;-fx-pref-height: 25px;-fx-font-weight: bold;"
+
         firebaseInit()
 
-        nameLabel.text = "Имя устройства: $nameOfDevice"
+        devices = getDevices()
+        var currentDevice: Device? = null
+
+        if (devices.isNotEmpty()){
+            updateDeviceMenu()
+        }
+
+
+        if (devices.isNotEmpty()){
+            currentDevice = devices.lastOrNull()
+            nameLabel.text = "Имя устройства: "
+            currentToken = currentDevice?.token.toString()
+            currentNameOfDevice = currentDevice?.name.toString()
+
+
+        } else infoField.text = "Добавьте устройство"
+
+        var choosenDeviceName: String = ""
+
+        deviceMenu.setOnAction { event ->
+                choosenDeviceName = deviceMenu.value
+                println(choosenDeviceName)
+                currentDevice = devices.firstOrNull{it.name == choosenDeviceName}
+                currentToken = currentDevice?.token.toString()
+                currentNameOfDevice = currentDevice?.name.toString()
+            }
+
+
+
+
         buttons = listOf<Button>(
             btn0,
             btn1,
@@ -177,20 +215,70 @@ class CodeNamesController {
         }
 
         newGameBtn.setOnMouseClicked {
-            if (nameOfDevice.isNotEmpty() && token.isNotEmpty()){
+            if (currentDevice != null){
                 infoField.text = "Игра началась!"
-                println(token)
+                println(currentNameOfDevice)
                 playGame(buttons)
             } else {infoField.text = "Сначала добавьте устройство"}
         }
 
         addNewDeviceBtn.setOnMouseClicked {
+
             if (newTokenField.text.isNotEmpty() && nameField.text.isNotEmpty()) {
-                prefs.put("TOKEN", newTokenField.text)
-                prefs.put("NAME", nameField.text)
+                if (devices.firstOrNull{it.name == nameField.text.toString().trim()}==null){
+                    devices.add(Device(nameField.text, newTokenField.text))
+                } else {
+                    infoField.text = "Выберите другое название"
+                    nameField.clear()
+                    newTokenField.clear()
+                    return@setOnMouseClicked
+                }
+
+                try {
+                    ObjectOutputStream(FileOutputStream(filename)).use { oos ->
+                        oos.writeObject(devices)
+                        println("File has been written")
+                        for (d in devices){
+                            println("name: ${d.name}, token: ${d.token}")
+                        }
+                    }
+                } catch (ex: java.lang.Exception) {
+                    println(ex.message)
+                }
                 infoField.text = "Устройство добавлено..."
+                nameField.clear()
+                newTokenField.clear()
+                updateDeviceMenu()
             } else {infoField.text = "Заполните оба поля!"}
         }
+    }
+
+    private fun updateDeviceMenu(){
+        //поправить обновление меню
+        val deviceNames = ArrayList<String>()
+        for (d in devices){
+            deviceNames.add(d.name)
+        }
+        val observableDeviceNames = FXCollections.observableArrayList<String>(deviceNames)
+        deviceMenu.items = observableDeviceNames
+        deviceMenu.value = observableDeviceNames[observableDeviceNames.size-1]
+    }
+
+    @JvmName("getDevices1")
+    fun getDevices(): ArrayList<Device>{
+        var newDevices = ArrayList<Device>()
+        try {
+            ObjectInputStream(FileInputStream(filename)).use { ois ->
+                newDevices = ois.readObject() as ArrayList<Device>
+            }
+        } catch (ex: java.lang.Exception) {
+            println(ex.message)
+        }
+
+        for (d in newDevices){
+            println("name: ${d.name}, token: ${d.token}")
+        }
+        return newDevices
     }
 
     private fun playGame(buttons: List<Button>) {
@@ -206,7 +294,7 @@ class CodeNamesController {
            blueResult = 9
            blackResult = 0
        }
-        sendTable(token)
+        sendTable(currentToken)
         result()
 
 
@@ -309,5 +397,29 @@ class CodeNamesController {
         transition.cycleCount = 2
         transition.play()
     }
+
+    fun saveToken(){
+        try {
+            ObjectOutputStream(FileOutputStream("devices.dat")).use { oos ->
+                val d = Device("Sam", "33")
+                oos.writeObject(d)
+            }
+        } catch (ex: Exception) {
+            println(ex.message)
+        }
+    }
+
+    fun getTokens(){
+        try {
+            ObjectInputStream(FileInputStream("devices.dat")).use { ois ->
+                val d: Device = ois.readObject() as Device
+                System.out.printf("Name: %s \t Token: %d \n", d.name, d.token)
+            }
+        } catch (ex: java.lang.Exception) {
+            println(ex.message)
+        }
+    }
+
+
 
 }
